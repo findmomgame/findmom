@@ -715,7 +715,7 @@
             const targetText = currentRoundData.word.trim().toLowerCase();
             
             if (resultText === targetText || resultText.includes(targetText)) {
-                applyDamage(50, 'speech-feedback-msg', "Phát âm tiếng Anh chính xác!");
+                applyDamage(100, 'speech-feedback-msg', "Phát âm tiếng Anh chính xác!");
             } else {
                 handleWrongAnswer('speech-feedback-msg', `Hệ thống nhận dạng: "${resultText}". Thử lại nào!`);
             }
@@ -725,7 +725,7 @@
     function toggleSpeechRecognition() {
         if (!recognition) {
             let simulate = confirm("[MÔ PHỎNG] Trình duyệt không hỗ trợ mic. Bấm OK để báo ĐÚNG.");
-            if (simulate) applyDamage(50, 'speech-feedback-msg', "Đọc chính xác!");
+            if (simulate) applyDamage(100, 'speech-feedback-msg', "Đọc chính xác!");
             return;
         }
         if (isListening) recognition.stop();
