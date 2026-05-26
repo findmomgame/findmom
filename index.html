@@ -246,17 +246,15 @@
     let userScrambleAnswer = [];
 
     // --- VIDEO AUTOMATION LOGIC ---
-    
-    // Tự động xử lý khi bấm nút "Bắt đầu trải nghiệm" trên màn hình Intro để bật tiếng
     function unmuteAndPlayIntro() {
         const video = document.getElementById('video-intro');
         const overlay = document.getElementById('intro-overlay-control');
         if (video) {
-            video.muted = false; // Bật tiếng video
+            video.muted = false; 
             video.currentTime = 0;
             video.play().then(() => {
                 if(overlay) overlay.style.opacity = '0';
-                // Kích hoạt mồi hệ thống giọng nói để tránh Autoplay Policy block Web Speech API
+            
                 if ('speechSynthesis' in window) {
                     let unlockUtterance = new SpeechSynthesisUtterance('');
                     window.speechSynthesis.speak(unlockUtterance);
@@ -264,7 +262,7 @@
                 setTimeout(() => { if(overlay) overlay.style.display = 'none'; }, 300);
             }).catch(err => {
                 console.log("Phát video có âm thanh gặp lỗi bảo mật: ", err);
-                exitIntro(); // Dự phòng chuyển cảnh nếu lỗi nặng
+                exitIntro(); 
             });
         }
     }
@@ -276,12 +274,10 @@
         loadGame(); 
     }
 
-    // Video Intro tự phát hết thời gian sẽ tự động gọi chuyển cảnh sang màn hình chính
     document.getElementById('video-intro').onended = function() {
         exitIntro();
     };
 
-    // Tự động kích hoạt phát video End Game khi thắng Boss 5
     function startEndGameVideo() {
         switchScreen('screen-endvideo');
         const video = document.getElementById('video-endgame');
@@ -290,7 +286,6 @@
             video.currentTime = 0;
             video.play().catch(err => {
                 console.log("Yêu cầu tương tác người dùng cho video chiến thắng: ", err);
-                // Nếu trình duyệt chặn, ép phát không tiếng làm dự phòng
                 video.muted = true;
                 video.play();
             });
@@ -300,13 +295,10 @@
     function exitEndVideo() {
         const video = document.getElementById('video-endgame');
         if (video) { video.pause(); video.currentTime = 0; }
-        // Sau khi hoàn thành toàn bộ game, đặt lại điểm hoặc giữ nguyên tùy ý, đưa về bản đồ thế giới
-        gameState.wordEnergy = Math.max(gameState.wordEnergy, 200); // Thưởng mốc năng lượng tối đa
+        gameState.wordEnergy = Math.max(gameState.wordEnergy, 200); 
         saveGame();
         switchScreen('screen-map');
     }
-
-    // Video kết thúc phát xong tự động đóng màn hình phát và hoàn thành trò chơi
     document.getElementById('video-endgame').onended = function() {
         exitEndVideo();
     };
