@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Mom: Tìm Lại Ký Ức Của Mẹ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<link rel="icon" href="logo.ico" type="image/x-icon">
+<body>
+
+    <div id="game-container">
+        <!-- HUD Status Bar -->
+        <div class="hud-bar">
+            <div class="hud-left">
+                <button class="btn-home" onclick="goToHome()">🏠 Home</button>
+            </div>
+            <div class="hud-item coin-txt">
+                <span class="hud-icon">🪙</span> <span id="val-coin">0</span>
+            </div>
+            <div class="hud-item xp-txt">
+                <span class="hud-icon">✨</span> <span id="val-xp">0</span> XP
+            </div>
+            <div class="hud-item energy-txt">
+                <span class="hud-icon">⚡</span> <span id="val-energy">0</span> WE
+            </div>
+        </div>
+
+        <!-- 0. MÀN HÌNH INTRO VIDEO -->
+        <div id="screen-intro" class="screen active" style="padding: 0; background: #000;">
+            <div class="video-screen-container">
+                <div style="position: absolute; top: 12px; left: 12px; z-index: 10; color: #fff; font-size: 11px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; pointer-events: none;">
+                    🎬 Đang phát Intro Game...
+                </div>
+                
+                <video id="video-intro" class="video-player" style="width: auto; height: auto;" playsinline autoplay muted>
+                    <source src="intro.mp4" type="video/mp4">
+                    Trình duyệt của bạn không hỗ trợ thẻ video.
+                </video>
+
+                <!-- Nút nhấn trung tâm vừa để kích hoạt âm thanh vừa để dự phòng nếu trình duyệt chặn autoplay -->
+                <div id="intro-overlay-control" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.4); z-index: 12; transition: opacity 0.3s;">
+                    <button class="btn-prime" style="background: #22c55e; max-width: 260px; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.5);" onclick="unmuteAndPlayIntro()">▶ BẮT ĐẦU TRẢI NGHIỆM</button>
+                    <p style="color: #94a3b8; font-size: 12px; margin-top: 10px; text-align: center; padding: 0 20px;">Click để bật âm thanh câu chuyện</p>
+                </div>
+
+                <div style="position: absolute; bottom: 20px; right: 20px; z-index: 15;">
+                    <button class="btn-prime" style="background: rgba(30, 41, 59, 0.8); border: 1px solid #475569; font-size: 12px; padding: 8px 16px; width: auto; text-transform: none;" onclick="exitIntro()">Skip⏩</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. SPLASH SCREEN (MAIN MENU) -->
+        <div id="screen-splash" class="screen">
+            <div style="font-size: 64px; margin-bottom: 10px;">🌌</div>
+            <h1 class="game-title">Word Energy</h1>
+            <p class="game-subtitle">Học Tiếng Anh Để Tìm Lại Ký Ức Của Mẹ</p>
+            <div style="display:flex; flex-direction:column; gap:10px; width:85%;">
+                <button id="btn-continue" class="btn-prime" onclick="continueGame()" disabled>Tiếp Tục Hành Trình</button>
+                <button class="btn-prime" style="background: #334155; box-shadow: none;" onclick="startNewGame()">Bắt Đầu Mới</button>
+            </div>
+        </div>
+
+        <!-- 2. STORY CUTSCENE SCREEN -->
+        <div id="screen-story" class="screen">
+            <div id="story-visual-canvas">
+                <div id="storm-layer" class="storm-overlay"></div>
+                <div id="story-graphic" class="story-graphic">🏡</div>
+            </div>
+            <div class="story-dialog-box">
+                <div>
+                    <div id="story-speaker" class="speaker-name">Mẹ</div>
+                    <div id="story-text" class="dialog-text">Đang tải câu chuyện...</div>
+                </div>
+                <button class="btn-prime" id="story-next-btn" style="padding: 8px 16px; margin-top: 10px; font-size: 14px; width: auto; align-self: flex-end;" onclick="nextStoryStep()">Tiếp tục</button>
+            </div>
+        </div>
+
+        <!-- 3. MAP SCREEN -->
+        <div id="screen-map" class="screen">
+            <div class="map-header">
+                <h2>Bản Đồ Vùng Đất</h2>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Tích lũy Word Energy (WE) để phá phong ấn</p>
+            </div>
+            <div class="map-list">
+                <div class="map-node active-node" onclick="startBattleZone(1)">
+                    <div class="map-node-info">
+                        <h3>1. Rừng Ngôn Từ (Forest of Words)</h3>
+                        <p>Nhận diện phát âm đơn từ cơ bản</p>
+                    </div>
+                    <div class="map-node-meta">
+                        <span style="color: var(--accent-green)">MỞ KHÓA</span>
+                    </div>
+                </div>
+
+                <div class="map-node locked" id="node-city" onclick="startBattleZone(2)">
+                    <div class="map-node-info">
+                        <h3>2. Thành Phố Vọng Âm (City of Echoes)</h3>
+                        <p>Trắc nghiệm phản xạ & câu chào hỏi ngắn</p>
+                    </div>
+                    <div class="map-node-meta">
+                        <span id="lbl-city">🔒 30 WE</span>
+                    </div>
+                </div>
+
+                <div class="map-node locked" id="node-library" onclick="startBattleZone(3)">
+                    <div class="map-node-info">
+                        <h3>3. Thư Viện Băng Giá (Frozen Library)</h3>
+                        <p>Nghe từ vựng & Phát âm chuẩn phá băng</p>
+                    </div>
+                    <div class="map-node-meta">
+                        <span id="lbl-library">🔒 70 WE</span>
+                    </div>
+                </div>
+
+                <div class="map-node locked" id="node-station" onclick="startBattleZone(4)">
+                    <div class="map-node-info">
+                        <h3>4. Trạm Bóng Tối (Shadow Station)</h3>
+                        <p>Sắp xếp từ phức thành câu hoàn chỉnh</p>
+                    </div>
+                    <div class="map-node-meta">
+                        <span id="lbl-station">🔒 120 WE</span>
+                    </div>
+                </div>
+
+                <div class="map-node locked" id="node-final" onclick="startBattleZone(5)">
+                    <div class="map-node-info">
+                        <h3 style="color: var(--gold);">⚡ Cổng Cuối Cùng (Final Gate)</h3>
+                        <p>Trận chiến Boss tổng hợp giải cứu người Mẹ</p>
+                    </div>
+                    <div class="map-node-meta">
+                        <span id="lbl-final">🔒 180 WE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. BATTLE GAMEPLAY SCREEN -->
+        <div id="screen-battle" class="screen">
+            <div style=" padding-top: 40px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <button onclick="switchScreen('screen-map')" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: bold;">⬅ Bản đồ</button>
+                <div id="battle-title-zone" style="font-size: 13px; font-weight: bold; color: var(--accent-cyan)">FOREST OF WORDS</div>
+            </div>
+
+            <div class="battle-arena">
+                <div class="monster-container">
+                    <div id="monster-img" class="monster-avatar">👾</div>
+                    <div class="health-bar-container">
+                        <div id="monster-hp-fill" class="health-bar-fill"></div>
+                    </div>
+                    <div id="monster-hp-text" class="health-text">Khiên bảo vệ: 100/100</div>
+                    <div id="boss-mechanic-badge" style="display:none; font-size:11px; margin-top:4px; padding:2px 6px; border-radius:4px; background:#ef4444; color:#fff; font-weight:bold;">⚠️ ĐẶC TÍNH BOSS: HỒI KHIÊN KHI ĐÁP SAI</div>
+                </div>
+
+                <!-- PANELS -->
+                <div id="panel-speech" class="game-view-panel">
+                    <div class="word-card">
+                        <div id="target-word" class="word-target">Apple</div>
+                        <div id="target-meaning" class="word-translation">Quả táo</div>
+                        <button class="audio-trigger-btn" onclick="playTargetAudio()">🔊</button>
+                    </div>
+                    <div class="speech-layout">
+                        <p id="speech-hint-text" style="font-size: 11px; color: var(--text-muted)">Click mic để đọc chuẩn xác từ vựng</p>
+                        <button class="mic-button" id="mic-btn" onclick="toggleSpeechRecognition()">🎤</button>
+                        <div id="speech-feedback-msg" class="speech-feedback feedback-neutral">Sẵn sàng...</div>
+                    </div>
+                </div>
+
+                <div id="panel-quiz" class="game-view-panel">
+                    <div class="word-card" style="padding: 14px;">
+                        <p style="font-size: 12px; color: var(--accent-cyan); font-weight: bold; margin-bottom:4px;">💬 Câu Hỏi Phản Xạ:</p>
+                        <div id="quiz-question-text" class="word-target" style="font-size: 20px; color: var(--gold);">How are you?</div>
+                        <p id="quiz-meaning-text" style="font-size: 12px; color: var(--text-muted);">Bạn khỏe không?</p>
+                    </div>
+                    <div class="quiz-options-container" id="quiz-options-box"></div>
+                    <div id="quiz-feedback-msg" class="speech-feedback feedback-neutral">Hãy chọn câu phản hồi đúng!</div>
+                </div>
+
+                <div id="panel-scramble" class="game-view-panel">
+                    <div class="word-card" style="padding: 12px; margin-bottom: 4px;">
+                        <p style="font-size: 11px; color: var(--text-muted)">Gợi ý nghĩa: <span id="scramble-hint" style="color:var(--gold); font-weight:bold;">Tôi muốn học tiếng Anh</span></p>
+                    </div>
+                    <div class="scramble-slots-row" id="scramble-slots"></div>
+                    <div class="scramble-words-pool" id="scramble-pool"></div>
+                    <button class="btn-prime" style="background:#ef4444; padding:6px; font-size:11px; box-shadow:none; width: auto; text-transform:none;" onclick="resetScrambleSentence()">Xóa Làm Lại</button>
+                    <div id="scramble-feedback-msg" class="speech-feedback feedback-neutral">Nhấp vào từ để ghép câu.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. REWARD SCREEN -->
+        <div id="screen-reward" class="screen">
+            <div class="reward-box">
+                <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                <div class="reward-title" id="reward-title-header">Quái Vật Đã Bị Thanh Tẩy!</div>
+                <p style="font-size: 14px; color: var(--text-main);">Bạn nhận được Nguồn Năng Lượng và tìm lại một phần ký ức ẩn giấu:</p>
+                
+                <div class="memory-slice" id="reward-memory-text">
+                    "Mẹ nhớ hồi nhỏ con rất thích ra vườn hái táo..."
+                </div>
+
+                <div class="reward-grid">
+                    <div class="reward-item" style="color: var(--gold);">🪙 +25</div>
+                    <div class="reward-item" style="color: var(--accent-cyan);">✨ +50 XP</div>
+                    <div class="reward-item" style="color: var(--accent-purple);">⚡ +20 WE</div>
+                </div>
+
+                <button class="btn-prime" id="btn-claim-reward" onclick="claimRewards()">Thu Thập & Tiếp Tục</button>
+            </div>
+        </div>
+
+        <!-- 6. END GAME VIDEO SCREEN -->
+        <div id="screen-endvideo" class="screen" style="padding: 0; background: #000;">
+            <div class="video-screen-container">
+                <div style="position: absolute; top: 55px; left: 12px; z-index: 10; color: #eab308; font-size: 11px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; font-weight: bold; pointer-events: none;">
+                    👑END GAME - VICTORY KÝ ỨC
+                </div>
+                <video id="video-endgame" class="video-player" style="width: auto; height: auto;" playsinline>
+                    <source src="endgame.mp4" type="video/mp4">
+                    Trình duyệt của bạn không hỗ trợ thẻ video.
+                </video>
+                <div style="position: absolute; bottom: 20px; z-index: 15;">
+                    <button class="btn-prime" style="background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%); padding: 10px 24px; font-size: 13px; width: auto; text-transform:none;" onclick="exitEndVideo()">Quay Lại Bản Đồ Thống Nhất</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- GAME STATE ---
+    const SAVE_KEY = "word_energy_game_save_v2";
+    let gameState = {
+        coins: 0,
+        xp: 0,
+        wordEnergy: 0,
+        currentStoryIndex: 0,
+        storyCompleted: false,
+        monsterMaxHP: 100,
+        monsterCurrentHP: 100
+    };
+
+    let currentZone = 1; 
+    let currentDataType = ""; 
+    let currentRoundData = {};
+    let isListening = false;
+    let userScrambleAnswer = [];
+
+    // --- VIDEO AUTOMATION LOGIC ---
+    
+    // Tự động xử lý khi bấm nút "Bắt đầu trải nghiệm" trên màn hình Intro để bật tiếng
+    function unmuteAndPlayIntro() {
+        const video = document.getElementById('video-intro');
+        const overlay = document.getElementById('intro-overlay-control');
+        if (video) {
+            video.muted = false; // Bật tiếng video
+            video.currentTime = 0;
+            video.play().then(() => {
+                if(overlay) overlay.style.opacity = '0';
+                // Kích hoạt mồi hệ thống giọng nói để tránh Autoplay Policy block Web Speech API
+                if ('speechSynthesis' in window) {
+                    let unlockUtterance = new SpeechSynthesisUtterance('');
+                    window.speechSynthesis.speak(unlockUtterance);
+                }
+                setTimeout(() => { if(overlay) overlay.style.display = 'none'; }, 300);
+            }).catch(err => {
+                console.log("Phát video có âm thanh gặp lỗi bảo mật: ", err);
+                exitIntro(); // Dự phòng chuyển cảnh nếu lỗi nặng
+            });
+        }
+    }
+
+    function exitIntro() {
+        const video = document.getElementById('video-intro');
+        if (video) { video.pause(); video.currentTime = 0; }
+        switchScreen('screen-splash');
+        loadGame(); 
+    }
+
+    // Video Intro tự phát hết thời gian sẽ tự động gọi chuyển cảnh sang màn hình chính
+    document.getElementById('video-intro').onended = function() {
+        exitIntro();
+    };
+
+    // Tự động kích hoạt phát video End Game khi thắng Boss 5
+    function startEndGameVideo() {
+        switchScreen('screen-endvideo');
+        const video = document.getElementById('video-endgame');
+        if (video) {
+            video.muted = false; 
+            video.currentTime = 0;
+            video.play().catch(err => {
+                console.log("Yêu cầu tương tác người dùng cho video chiến thắng: ", err);
+                // Nếu trình duyệt chặn, ép phát không tiếng làm dự phòng
+                video.muted = true;
+                video.play();
+            });
+        }
+    }
+
+    function exitEndVideo() {
+        const video = document.getElementById('video-endgame');
+        if (video) { video.pause(); video.currentTime = 0; }
+        // Sau khi hoàn thành toàn bộ game, đặt lại điểm hoặc giữ nguyên tùy ý, đưa về bản đồ thế giới
+        gameState.wordEnergy = Math.max(gameState.wordEnergy, 200); // Thưởng mốc năng lượng tối đa
+        saveGame();
+        switchScreen('screen-map');
+    }
+
+    // Video kết thúc phát xong tự động đóng màn hình phát và hoàn thành trò chơi
+    document.getElementById('video-endgame').onended = function() {
+        exitEndVideo();
+    };
+
+ const zone1Words = [
+        { word: "Apple", definition: "Quả táo", memory: "Mảnh ký ức 1: Mẹ dặn con ăn trái cây tươi mỗi ngày để khỏe mạnh..." },
+        { word: "Cat", definition: "Con mèo", memory: "Mảnh ký ức 2: Chú mèo nhỏ cuộn tròn bên chân mẹ sưởi ấm bên bếp lửa..." },
+        { word: "Blue", definition: "Màu xanh da trời", memory: "Mảnh ký ức 3: Màu chiếc áo len mẹ tỉ mẩn đan tặng con mùa đông năm ấy..." },
+        { word: "Family", definition: "Gia đình", memory: "Mảnh ký ức 13: Bức ảnh cả nhà mình cười thật tươi treo trang trọng ở phòng khách..." },
+        { word: "Sun", definition: "Mặt trời", memory: "Mảnh ký ức 14: Mẹ nói con chính là vầng thái dương nhỏ, xua tan mọi mệt mỏi của mẹ..." },
+        { word: "Water", definition: "Nước", memory: "Mảnh ký ức 15: Ly nước ấm dịu mát mẹ luôn chuẩn bị sẵn trên bàn mỗi khi con đi học về..." },
+        { word: "Book", definition: "Quyển sách", memory: "Mảnh ký ức 16: Những câu chuyện cổ tích ngày xưa mẹ lật mở đưa con vào giấc ngủ..." }
+    ];
+
+    const zone2Conversations = [
+        { q: "Good morning!", hint: "Chào buổi sáng!", ans: "Good morning! Nice to see you.", opts: ["Good morning! Nice to see you.", "Goodbye!", "Thank you."], memory: "Mảnh ký ức 4: Mỗi sớm thức dậy, tiếng mẹ dịu dàng gọi con chuẩn bị đi học..." },
+        { q: "How are you?", hint: "Bạn khỏe không?", ans: "I am fine, thank you.", opts: ["I am fine, thank you.", "See you later.", "No, I don't."], memory: "Mảnh ký ức 5: Ánh mắt lo lắng của mẹ ôm lấy con mỗi khi con sốt hay mệt..." },
+        { q: "Hello, what's your name?", hint: "Xin chào, tên bạn là gì?", ans: "My name is Lam.", opts: ["My name is Lam.", "I am ten.", "Fine, thanks."], memory: "Mảnh ký ức 6: Cái tên Lam thân thương của con chính là kỳ vọng và niềm tự hào lớn nhất đời mẹ..." },
+        { q: "Nice to meet you!", hint: "Rất vui được gặp bạn!", ans: "Nice to meet you too.", opts: ["Nice to meet you too.", "I'm sorry.", "You're welcome."], memory: "Mảnh ký ức 17: Nụ cười hiền hậu của mẹ khi đón tiếp những người bạn thân thiết đến chơi nhà..." },
+        { q: "Thank you so much for your help.", hint: "Cảm ơn bạn rất nhiều vì đã giúp đỡ.", ans: "You are welcome.", opts: ["You are welcome.", "No, problem.", "Yes, please."], memory: "Mảnh ký ức 18: Mẹ luôn dạy con phải biết nói lời cảm ơn và trân trọng lòng tốt của người khác..." },
+        { q: "Where are you from?", hint: "Bạn từ đâu đến?", ans: "I am from Vietnam.", opts: ["I am from Vietnam.", "I am a student.", "I like pizza."], memory: "Mảnh ký ức 19: Tình yêu quê hương xứ sở và những món ăn đậm đà vị quê mà mẹ thường nấu..." }
+    ];
+
+    const zone3Library = [
+        { word: "Library", definition: "Thư viện (Phá băng)", memory: "Mảnh ký ức 7: Cuốn sách cũ lấp lánh phép thuật nằm im lìm trên bàn của mẹ..." },
+        { word: "Knowledge", definition: "Tri thức (Phá băng)", memory: "Mảnh ký ức 8: Mẹ nói tri thức là ngọn đèn duy nhất soi rọi đêm tối..." },
+        { word: "Listen", definition: "Lắng nghe (Phá băng)", memory: "Mảnh ký ức 9: Tiếng mẹ khuyên bảo luôn ấm áp và bao dung vô bờ bến..." },
+        { word: "Education", definition: "Giáo dục (Phá băng)", memory: "Mảnh ký ức 20: Dù vất vả thế nào, mẹ cũng luôn ưu tiên dành những điều tốt nhất cho việc học của con..." },
+        { word: "History", definition: "Lịch sử (Phá băng)", memory: "Mảnh ký ức 21: Những câu chuyện kể về nguồn cội qua giọng kể trầm ấm của mẹ..." },
+        { word: "Remember", definition: "Ghi nhớ (Phá băng)", memory: "Mảnh ký ức 22: Lời hứa của hai mẹ con dưới hiên nhà, rằng chúng ta sẽ không bao giờ quên nhau..." },
+        { word: "Future", definition: "Tương lai (Phá băng)", memory: "Mảnh ký ức 23: Ánh mắt hy vọng của mẹ nhìn về con đường phía trước, nơi con sẽ trưởng thành vững vàng..." },
+        { word: "Unbelievable", definition: "Không thể tin nổi", memory: "Mảnh ký ức 27: Mẹ bất ngờ khóc òa hạnh phúc khi chứng kiến con tự bước đi những bước đầu tiên trong đời..." },
+        { word: "Challenge", definition: "Thử thách / Thách thức", memory: "Mảnh ký ức 28: Mẹ dặn: Khó khăn không phải để lùi bước, mà để chứng minh con kiên cường thế nào." },
+        { word: "Environment", definition: "Môi trường sống", memory: "Mảnh ký ức 29: Ký ức về mảnh vườn xanh ngát mẹ trồng đầy hoa dại và cây thuốc nam mát rượi..." },
+        { word: "Experience", definition: "Kinh nghiệm / Trải nghiệm", memory: "Mảnh ký ức 30: Vết sẹo nhỏ trên tay con và cái thổi phù dịu dàng từ đôi môi ấm áp của mẹ để dỗ dành..." },
+        { word: "Opportunity", definition: "Cơ hội / Thời cơ", memory: "Mảnh ký ức 31: Mẹ khích lệ con tham gia những cuộc thi lớn, luôn là hậu phương vững chắc cho con." },
+        { word: "Responsibility", definition: "Trách nhiệm", memory: "Mảnh ký ức 32: Bài học về sự tự lập, tự chịu trách nhiệm với những lỗi lầm nhỏ khi con còn thơ bé..." }
+    ];
+
+    const zone4Scramble = [
+        { hint: "Tôi thích tiếng Anh", target: "I LIKE ENGLISH", words: ["LIKE", "I", "ENGLISH"], memory: "Mảnh ký ức 10: Ước mơ vươn ra thế giới của con luôn có bóng hình mẹ phía sau cổ vũ..." },
+        { hint: "Mẹ là tất cả", target: "MOTHER IS MY EVERYTHING", words: ["MY", "IS", "MOTHER", "EVERYTHING"], memory: "Mảnh ký ức 11: Sự bình yên của mẹ chính là hạnh phúc trọn vẹn lớn nhất của đời con..." },
+        { hint: "Chúng ta sẽ về nhà", target: "WE WILL GO HOME", words: ["GO", "WE", "HOME", "WILL"], memory: "Mảnh ký ức 12: Phá vỡ bóng tối, con nhất định đưa mẹ trở về ngôi nhà hạnh phúc của chúng ta!" },
+        { hint: "Mẹ yêu con rất nhiều", target: "MY MOTHER LOVES ME SO MUCH", words: ["SO", "ME", "LOVES", "MY", "MOTHER", "MUCH"], memory: "Mảnh ký ức 24: Cái ôm ấm áp và những giọt nước mắt hạnh phúc của mẹ mỗi khi con đạt thành tích tốt..." },
+        { hint: "Học tập mỗi ngày giúp bạn thông minh hơn", target: "STUDYING EVERY DAY MAKES YOU SMARTER", words: ["SMARTER", "EVERY", "MAKES", "DAY", "STUDYING", "YOU"], memory: "Mảnh ký ức 25: Những đêm dài mẹ thức cùng con bên ánh đèn bàn, dịu dàng quạt mát cho con học bài..." },
+        { hint: "Tôi sẽ không bao giờ bỏ cuộc", target: "I WILL NEVER GIVE UP", words: ["GIVE", "NEVER", "WILL", "I", "UP"], memory: "Mảnh ký ức 26: Ý chí kiên cường mẹ truyền lại, giúp con đứng vững trước mọi giông bão cuộc đời..." },
+        { hint: "Thời gian trôi qua rất nhanh", target: "TIME GOES BY VERY FAST", words: ["FAST", "GOES", "VERY", "TIME", "BY"], memory: "Mảnh ký ức 33: Mẹ vuốt tóc con, thốt lên rằng con trai của mẹ lớn nhanh quá, chẳng còn là em bé nũng nịu." },
+        { hint: "Gia đình luôn đứng về phía bạn", target: "FAMILY ALWAYS STANDS BY YOUR SIDE", words: ["STANDS", "YOUR", "FAMILY", "ALWAYS", "SIDE", "BY"], memory: "Mảnh ký ức 34: Dù thế giới ngoài kia có quay lưng, mái nhà và vòng tay mẹ vẫn luôn rộng mở che chở Duy." },
+        { hint: "Hãy làm việc chăm chỉ vì tương lai của bạn", target: "WORK HARD FOR YOUR FUTURE", words: ["FOR", "WORK", "YOUR", "FUTURE", "HARD"], memory: "Mảnh ký ức 35: Lời dặn dò nghiêm khắc nhưng đong đầy tình thương của mẹ trước mỗi kỳ thi quan trọng." },
+        { hint: "Lắng nghe trái tim bạn", target: "LISTEN TO YOUR HEART", words: ["TO", "HEART", "YOUR", "LISTEN"], memory: "Mảnh ký ức 36: Khi con phân vân trước những ngã rẽ cuộc đời, mẹ nói hãy chọn điều làm con thanh thản nhất." },
+        { hint: "Kiến thức là sức mạnh tối thượng", target: "KNOWLEDGE IS THE ULTIMATE POWER", words: ["POWER", "ULTIMATE", "THE", "KNOWLEDGE", "IS"], memory: "Mảnh ký ức 37: Cuốn sổ tay ghi chép những mẹo vặt, bài học hay mà mẹ tích lũy cả đời để lại cho con." }
+    ];
+
+    const zone5BossPools = {
+        speech: [
+            { word: "Transformation", definition: "Sự biến đổi (Thanh tẩy cốt lõi)", memory: "Mảnh ký ức vĩnh cửu: Mẹ ôm lấy con, bóng tối tan biến hoàn toàn dưới ánh bình minh." },
+            { word: "Reunion", definition: "Sự đoàn tụ (Ký ức tối hậu)", memory: "Mảnh ký ức vĩnh cửu: Gia đình mình lại quây quần bên mâm cơm ấm cúng như ngày xưa." },
+            { word: "Determination", definition: "Sự quyết tâm cao độ", memory: "Mảnh ký ức vĩnh cửu: Ánh mắt kiên định của Duy xuyên thấu tâm can quái vật bóng tối." },
+            { word: "Enthusiasm", definition: "Sự hăng hái / Lòng nhiệt huyết", memory: "Mảnh ký ức vĩnh cửu: Ngọn lửa đam mê tri thức bùng cháy, thiêu rụi xiềng xích ma thuật." },
+            { word: "Affection", definition: "Tình cảm chân thành / Lòng yêu thương", memory: "Mảnh ký ức vĩnh cửu: Sức mạnh vĩ đại nhất vũ trụ chính là tình mẫu tử thiêng liêng." },
+            { word: "Perseverance", definition: "Sự kiên trì / Bền chí", memory: "Mảnh ký ức vĩnh cửu: Đi qua hàng trăm thử thách gian nan, Duy đã chứng minh mình xứng đáng." }
+        ],
+        quiz: [
+            { q: "We have finally broken the curse, Mom!", hint: "Phá vỡ lời nguyền rồi mẹ ơi!", ans: "Yes, I am so proud of you, Lam.", opts: ["Yes, I am so proud of you, Lam.", "It is a big monster.", "No, it is freezing."] },
+            { q: "Do you remember who I am, Mom?", hint: "Mẹ có nhớ con là ai không mẹ?", ans: "You are Lam, my beloved son.", opts: ["You are Lam, my beloved son.", "I am very tired.", "This is a dangerous place."] },
+            { q: "What is the most powerful magic in the world?", hint: "Phép thuật mạnh nhất thế giới là gì?", ans: "It is the love of our family.", opts: ["It is the love of our family.", "It is fire magic.", "It is money and gold."] },
+            { q: "Will we ever be separated again?", hint: "Chúng ta có bao giờ bị chia cắt nữa không?", ans: "Never, we will stay together forever.", opts: ["Never, we will stay together forever.", "Yes, tomorrow.", "I don't know the way."] },
+            { q: "How did you survive in the dark, Mom?", hint: "Mẹ đã sống sót thế nào trong bóng tối?", ans: "By thinking about your beautiful smile.", opts: ["By thinking about your beautiful smile.", "By eating apples.", "By reading magic books."] }
+        ],
+        scramble: [
+            { hint: "Ánh sáng tri thức đã chiến thắng bóng tối", target: "THE LIGHT OF KNOWLEDGE WON THE DARKNESS", words: ["DARKNESS", "THE", "KNOWLEDGE", "WON", "LIGHT", "OF", "THE"] },
+            { hint: "Tình mẫu tử có thể chữa lành mọi vết thương", target: "MOTHER LOVE CAN HEAL ALL WOUNDS", words: ["HEAL", "LOVE", "WOUNDS", "CAN", "MOTHER", "ALL"] },
+            { hint: "Tôi sẽ luôn bảo vệ gia đình mình", target: "I WILL ALWAYS PROTECT MY FAMILY", words: ["ALWAYS", "FAMILY", "PROTECT", "I", "MY", "WILL"] },
+            { hint: "Bóng tối không thể tồn tại nơi có ánh sáng", target: "DARKNESS CANNOT EXIST WHERE LIGHT SHINES", words: ["SHINES", "EXIST", "DARKNESS", "LIGHT", "CANNOT", "WHERE"] },
+            { hint: "Hành trình vạn dặm bắt đầu từ một bước chân", target: "A JOURNEY OF THOUSAND MILES BEGINS WITH A STEP", words: ["BEGINS", "A", "MILES", "STEP", "JOURNEY", "THOUSAND", "WITH", "OF"] }
+        ]
+    };
+    const storySteps = [
+        { speaker: "Hệ thống", text: "Một đêm bão bùng gầm rú, sấm chớp rạch ngang trời, bầu không khí u ám bao trùm ngôi nhà...", graphic: "⛈️" },
+        { speaker: "Mẹ", text: "Con ơi, nhớ phải rèn luyện tri thức mỗi ngày, vững vàng bước đi con nhé...", graphic: "👩‍👦" },
+        { speaker: "Quái vật", text: "Kha kha... Năng lượng tiêu cực đã chín muồi. Người mẹ này phải đi theo ta!", graphic: "👾" },
+        { speaker: "Mẹ", text: "Con ơi! Hãy tích lũy năng lượng từ ngữ (Word Energy) để tìm và cứu mẹ...", graphic: "🌀" }
+    ];
+
+    // --- SAVE / LOAD GAME ---
+    function saveGame() {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+        updateHUD();
+    }
+
+    function loadGame() {
+        const localData = localStorage.getItem(SAVE_KEY);
+        if (localData) {
+            try {
+                gameState = JSON.parse(localData);
+                updateHUD(); 
+                const btnContinue = document.getElementById('btn-continue');
+                if (btnContinue && (gameState.storyCompleted || gameState.currentStoryIndex > 0 || gameState.xp > 0)) {
+                    btnContinue.disabled = false;
+                }
+            } catch (e) { console.error(e); }
+        }
+    }
+
+    function updateHUD() {
+        if(document.getElementById('val-coin')) document.getElementById('val-coin').innerText = gameState.coins;
+        if(document.getElementById('val-xp')) document.getElementById('val-xp').innerText = gameState.xp;
+        if(document.getElementById('val-energy')) document.getElementById('val-energy').innerText = gameState.wordEnergy;
+
+        const nc = document.getElementById('node-city');
+        const nl = document.getElementById('node-library');
+        const ns = document.getElementById('node-station');
+        const nf = document.getElementById('node-final');
+
+        if (nc && gameState.wordEnergy >= 0) { nc.classList.remove('locked'); document.getElementById('lbl-city').innerText = "SẴN SÀNG"; }
+        if (nl && gameState.wordEnergy >= 0) { nl.classList.remove('locked'); document.getElementById('lbl-library').innerText = "SẴN SÀNG"; }
+        if (ns && gameState.wordEnergy >= 0) { ns.classList.remove('locked'); document.getElementById('lbl-station').innerText = "SẴN SÀNG"; }
+        if (nf && gameState.wordEnergy >= 0) { nf.classList.remove('locked'); document.getElementById('lbl-final').innerText = "SẴN SÀNG"; }
+    }
+
+    // --- SCREEN NAVIGATION WITH TRANSITION ---
+    function switchScreen(screenId) {
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(s => s.classList.remove('active'));
+        
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+        }
+
+        if (recognition && isListening) recognition.stop();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+    }
+
+    function startNewGame() {
+        gameState = { coins: 0, xp: 0, wordEnergy: 0, currentStoryIndex: 0, storyCompleted: false, monsterMaxHP: 100, monsterCurrentHP: 100 };
+        saveGame();
+        switchScreen('screen-story');
+        renderStoryStep();
+    } 
+
+    function continueGame() {
+        if (gameState.storyCompleted) switchScreen('screen-map');
+        else { switchScreen('screen-story'); renderStoryStep(); }
+    }
+
+    function goToHome() {
+        if (confirm("Quay về màn hình chính?")) { switchScreen('screen-splash'); loadGame(); }
+    }
+
+    // --- STORY MECHANICS ---
+    function renderStoryStep() {
+        let data = storySteps[gameState.currentStoryIndex];
+        document.getElementById('story-speaker').innerText = data.speaker;
+        document.getElementById('story-text').innerText = data.text;
+        document.getElementById('story-graphic').innerText = data.graphic;
+    }
+
+    function nextStoryStep() {
+        gameState.currentStoryIndex++;
+        if (gameState.currentStoryIndex < storySteps.length) {
+            saveGame(); renderStoryStep();
+        } else {
+            gameState.storyCompleted = true; saveGame();
+            switchScreen('screen-map');
+        }
+    }
+
+    // --- BATTLE MECHANICS CONTROLLER ---
+    function startBattleZone(zoneId) {
+        currentZone = zoneId;
+        switchScreen('screen-battle');
+
+        const names = ["", "FOREST OF WORDS", "CITY OF ECHOES", "FROZEN LIBRARY", "SHADOW STATION", "⚡ FINAL GATE ⚡"];
+        const icons = ["", "👾", "🔥", "❄️", "👺", "👑"];
+        document.getElementById('battle-title-zone').innerText = names[zoneId];
+        document.getElementById('monster-img').innerText = icons[zoneId];
+
+        if(zoneId === 5) {
+            gameState.monsterMaxHP = 300; 
+            document.getElementById('boss-mechanic-badge').style.display = 'block';
+        } else {
+            gameState.monsterMaxHP = 100;
+            document.getElementById('boss-mechanic-badge').style.display = 'none';
+        }
+        
+        gameState.monsterCurrentHP = gameState.monsterMaxHP;
+        setupMonsterUI();
+        generateRoundChallenge();
+    }
+
+    function setupMonsterUI() {
+        let pct = (gameState.monsterCurrentHP / gameState.monsterMaxHP) * 100;
+        if(document.getElementById('monster-hp-fill')) document.getElementById('monster-hp-fill').style.width = pct + "%";
+        if(document.getElementById('monster-hp-text')) document.getElementById('monster-hp-text').innerText = `Khiên bảo vệ: ${gameState.monsterCurrentHP}/${gameState.monsterMaxHP}`;
+    }
+
+    function generateRoundChallenge() {
+        document.querySelectorAll('.game-view-panel').forEach(p => p.classList.remove('active-panel'));
+
+        let mode = "speech";
+        if (currentZone === 1) mode = "speech";
+        else if (currentZone === 2) mode = "quiz";
+        else if (currentZone === 3) mode = "speech";
+        else if (currentZone === 4) mode = "scramble";
+        else if (currentZone === 5) {
+            let rand = Math.random();
+            mode = rand < 0.34 ? "speech" : (rand < 0.67 ? "quiz" : "scramble");
+        }
+        currentDataType = mode;
+
+        if (mode === "speech") {
+            document.getElementById('panel-speech').classList.add('active-panel');
+            let pool = currentZone === 3 ? zone3Library : zone1Words;
+            if (currentZone === 5) pool = zone5BossPools.speech;
+            
+            currentRoundData = pool[Math.floor(Math.random() * pool.length)];
+            document.getElementById('target-word').innerText = currentRoundData.word;
+            document.getElementById('target-meaning').innerText = currentRoundData.definition;
+            document.getElementById('speech-feedback-msg').innerText = "Sẵn sàng nhận diện mic...";
+            document.getElementById('speech-feedback-msg').className = "speech-feedback feedback-neutral";
+        } 
+        else if (mode === "quiz") {
+            document.getElementById('panel-quiz').classList.add('active-panel');
+            let pool = currentZone === 5 ? zone5BossPools.quiz : zone2Conversations;
+            currentRoundData = pool[Math.floor(Math.random() * pool.length)];
+            
+            document.getElementById('quiz-question-text').innerText = currentRoundData.q;
+            document.getElementById('quiz-meaning-text').innerText = currentRoundData.hint;
+            document.getElementById('quiz-feedback-msg').innerText = "Hãy phản hồi hội thoại chuẩn xác!";
+            document.getElementById('quiz-feedback-msg').className = "speech-feedback feedback-neutral";
+
+            let box = document.getElementById('quiz-options-box');
+            box.innerHTML = "";
+            currentRoundData.opts.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.className = "btn-quiz-option";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if(opt === currentRoundData.ans) {
+                        applyDamage(100, 'quiz-feedback-msg', "Phản xạ giao tiếp cực kỳ chuẩn xác!");
+                    } else {
+                        handleWrongAnswer('quiz-feedback-msg', "Câu trả lời sai! Boss cuối hồi khiên!");
+                    }
+                };
+                box.appendChild(btn);
+            });
+        } 
+        else if (mode === "scramble") {
+            document.getElementById('panel-scramble').classList.add('active-panel');
+            let pool = currentZone === 5 ? zone5BossPools.scramble : zone4Scramble;
+            currentRoundData = pool[Math.floor(Math.random() * pool.length)];
+            
+            document.getElementById('scramble-hint').innerText = currentRoundData.hint;
+            document.getElementById('scramble-feedback-msg').innerText = "Sắp xếp từ để hoàn thiện câu.";
+            document.getElementById('scramble-feedback-msg').className = "speech-feedback feedback-neutral";
+            
+            userScrambleAnswer = [];
+            let shuffled = [...currentRoundData.words].sort(() => Math.random() - 0.5);
+            
+            let slotsBox = document.getElementById('scramble-slots');
+            let poolBox = document.getElementById('scramble-pool');
+            slotsBox.innerHTML = ""; poolBox.innerHTML = "";
+
+            for(let i=0; i<currentRoundData.words.length; i++) {
+                let sl = document.createElement('div'); sl.className = "scramble-empty-slot"; sl.id = "sc-slot-" + i;
+                slotsBox.appendChild(sl);
+            }
+
+            shuffled.forEach(w => {
+                let btn = document.createElement('button');
+                btn.className = "btn-scramble-word";
+                btn.innerText = w;
+                btn.onclick = () => {
+                    if (userScrambleAnswer.length < currentRoundData.words.length) {
+                        btn.classList.add('used');
+                        userScrambleAnswer.push({ word: w, btnRef: btn });
+                        updateScrambleUI();
+                    }
+                };
+                poolBox.appendChild(btn);
+            });
+        }
+    }
+
+    function updateScrambleUI() {
+        for(let i=0; i<currentRoundData.words.length; i++) {
+            let el = document.getElementById("sc-slot-" + i);
+            if(el) el.innerText = userScrambleAnswer[i] ? userScrambleAnswer[i].word : "";
+        }
+
+        if(userScrambleAnswer.length === currentRoundData.words.length) {
+            let constructedSentence = userScrambleAnswer.map(item => item.word).join(' ').trim().toUpperCase();
+            let targetSentence = currentRoundData.target.trim().toUpperCase();
+            
+            if(constructedSentence === targetSentence) {
+                applyDamage(100, 'scramble-feedback-msg', "Ghép từ chuẩn cấu trúc ngữ pháp!");
+            } else {
+                handleWrongAnswer('scramble-feedback-msg', "Cấu trúc chưa chính xác! Thử lại Bạn nhé.");
+            }
+        }
+    }
+
+    function handleWrongAnswer(feedbackId, msg) {
+        let fb = document.getElementById(feedbackId);
+        if (fb) {
+            fb.innerText = msg;
+            fb.className = "speech-feedback feedback-error";
+        }
+        if(currentZone === 5) {
+            gameState.monsterCurrentHP = Math.min(gameState.monsterCurrentHP + 30, gameState.monsterMaxHP);
+            setupMonsterUI();
+        }
+    }
+
+    function resetScrambleSentence() {
+        userScrambleAnswer = [];
+        document.querySelectorAll('.scramble-empty-slot').forEach(slot => slot.innerText = "");
+        document.querySelectorAll('.btn-scramble-word').forEach(btn => btn.classList.remove('used'));
+    }
+
+    function applyDamage(amount, feedbackId, msg) {
+        gameState.monsterCurrentHP = Math.max(gameState.monsterCurrentHP - amount, 0);
+        setupMonsterUI();
+
+        let fb = document.getElementById(feedbackId);
+        if (fb) {
+            fb.innerText = msg;
+            fb.className = "speech-feedback feedback-success";
+        }
+
+        if (gameState.monsterCurrentHP <= 0) {
+            setTimeout(() => { triggerVictoryPopup(); }, 600);
+        } else {
+            setTimeout(() => { generateRoundChallenge(); }, 1200);
+        }
+    }
+
+    function playTargetAudio() {
+        if (!currentRoundData || !currentRoundData.word) return;
+        let textToSpeak = currentRoundData.word;
+        
+        let audioUrl = "https://dict.youdao.com/speech?audio=" + encodeURIComponent(textToSpeak) + "&le=eng";
+        
+        try {
+
+            let audioPlayer = document.getElementById('game-universal-audio');
+            if (!audioPlayer) {
+                audioPlayer = document.createElement('audio');
+                audioPlayer.id = 'game-universal-audio';
+                audioPlayer.setAttribute('preload', 'auto');
+                audioPlayer.style.display = 'none';
+                document.body.appendChild(audioPlayer);
+            }
+            
+            audioPlayer.src = audioUrl;
+            
+            audioPlayer.load();
+            let playPromise = audioPlayer.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(function(error) {
+                    console.log("Audio play mồi thất bại, chuyển sang phương án dự phòng 2:", error);
+                    fallbackSpeechSynthesis(textToSpeak);
+                });
+            }
+        } catch (e) {
+            console.error("Lỗi Audio gốc, chuyển qua SpeechSynthesis:", e);
+            fallbackSpeechSynthesis(textToSpeak);
+        }
+    }
+
+    function fallbackSpeechSynthesis(text) {
+        if ('speechSynthesis' in window) {
+            let utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+            utterance.pitch = 1.0;
+            
+            let voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                let enVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en-'));
+                if (enVoice) utterance.voice = enVoice;
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    let recognition;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = function() {
+            isListening = true;
+            if(document.getElementById('mic-btn')) document.getElementById('mic-btn').classList.add('recording');
+        };
+        recognition.onerror = function() {
+            isListening = false;
+            if(document.getElementById('mic-btn')) document.getElementById('mic-btn').classList.remove('recording');
+        };
+        recognition.onend = function() { 
+            isListening = false; 
+            if(document.getElementById('mic-btn')) document.getElementById('mic-btn').classList.remove('recording'); 
+        };
+        recognition.onresult = function(event) {
+            const resultText = event.results[0][0].transcript.trim().toLowerCase();
+            const targetText = currentRoundData.word.trim().toLowerCase();
+            
+            if (resultText === targetText || resultText.includes(targetText)) {
+                applyDamage(50, 'speech-feedback-msg', "Phát âm tiếng Anh chính xác!");
+            } else {
+                handleWrongAnswer('speech-feedback-msg', `Hệ thống nhận dạng: "${resultText}". Thử lại nào!`);
+            }
+        };
+    }
+
+    function toggleSpeechRecognition() {
+        if (!recognition) {
+            let simulate = confirm("[MÔ PHỎNG] Trình duyệt không hỗ trợ mic. Bấm OK để báo ĐÚNG.");
+            if (simulate) applyDamage(50, 'speech-feedback-msg', "Đọc chính xác!");
+            return;
+        }
+        if (isListening) recognition.stop();
+        else { try { recognition.start(); } catch(e){} }
+    }
+
+    function triggerVictoryPopup() {
+        if(currentZone === 5) {
+
+            startEndGameVideo();
+        } else {
+            document.getElementById('reward-title-header').innerText = "Quái Vật Đã Bị Thanh Tẩy!";
+            document.getElementById('reward-memory-text').innerText = currentRoundData.memory || "Bạn đã nhớ lại một phần cuộc sống ấm áp bên người mẹ thân yêu.";
+            switchScreen('screen-reward');
+        }
+    }
+
+    function claimRewards() {
+        gameState.coins += 25;
+        gameState.xp += 50;
+        gameState.wordEnergy += 20;
+        saveGame();
+        switchScreen('screen-map');
+    }
+
+    function unlockMobileSpeech() {
+        if ('speechSynthesis' in window) {
+            let u = new SpeechSynthesisUtterance('');
+            u.lang = 'en-US';
+            u.volume = 0; 
+            window.speechSynthesis.speak(u);
+
+            document.removeEventListener('click', unlockMobileSpeech);
+            document.removeEventListener('touchstart', unlockMobileSpeech);
+        }
+    }
+    document.addEventListener('click', unlockMobileSpeech);
+    document.addEventListener('touchstart', unlockMobileSpeech);
+
+    if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = function() {
+            window.speechSynthesis.getVoices();
+        };
+    }
+
+    window.onload = function() { 
+        loadGame(); 
+    };
+</script>
+</body>
+</html>
