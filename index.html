@@ -89,7 +89,7 @@
                         <p>Nhận diện phát âm đơn từ cơ bản</p>
                     </div>
                     <div class="map-node-meta">
-                        <span style="color: var(--accent-green)">MỞ KHÓA</span>
+                        <span style="color: var(--accent-green)">SẴN SÀNG</span>
                     </div>
                 </div>
 
@@ -250,15 +250,17 @@
     let userScrambleAnswer = [];
 
     // --- VIDEO AUTOMATION LOGIC ---
+    
+    // Tự động xử lý khi bấm nút "Bắt đầu trải nghiệm" trên màn hình Intro để bật tiếng
     function unmuteAndPlayIntro() {
         const video = document.getElementById('video-intro');
         const overlay = document.getElementById('intro-overlay-control');
         if (video) {
-            video.muted = false; 
+            video.muted = false; // Bật tiếng video
             video.currentTime = 0;
             video.play().then(() => {
                 if(overlay) overlay.style.opacity = '0';
-            
+                // Kích hoạt mồi hệ thống giọng nói để tránh Autoplay Policy block Web Speech API
                 if ('speechSynthesis' in window) {
                     let unlockUtterance = new SpeechSynthesisUtterance('');
                     window.speechSynthesis.speak(unlockUtterance);
@@ -266,7 +268,7 @@
                 setTimeout(() => { if(overlay) overlay.style.display = 'none'; }, 300);
             }).catch(err => {
                 console.log("Phát video có âm thanh gặp lỗi bảo mật: ", err);
-                exitIntro(); 
+                exitIntro(); // Dự phòng chuyển cảnh nếu lỗi nặng
             });
         }
     }
@@ -278,10 +280,12 @@
         loadGame(); 
     }
 
+    // Video Intro tự phát hết thời gian sẽ tự động gọi chuyển cảnh sang màn hình chính
     document.getElementById('video-intro').onended = function() {
         exitIntro();
     };
 
+    // Tự động kích hoạt phát video End Game khi thắng Boss 5
     function startEndGameVideo() {
         switchScreen('screen-endvideo');
         const video = document.getElementById('video-endgame');
@@ -290,6 +294,7 @@
             video.currentTime = 0;
             video.play().catch(err => {
                 console.log("Yêu cầu tương tác người dùng cho video chiến thắng: ", err);
+                // Nếu trình duyệt chặn, ép phát không tiếng làm dự phòng
                 video.muted = true;
                 video.play();
             });
@@ -299,10 +304,13 @@
     function exitEndVideo() {
         const video = document.getElementById('video-endgame');
         if (video) { video.pause(); video.currentTime = 0; }
-        gameState.wordEnergy = Math.max(gameState.wordEnergy, 200); 
+        // Sau khi hoàn thành toàn bộ game, đặt lại điểm hoặc giữ nguyên tùy ý, đưa về bản đồ thế giới
+        gameState.wordEnergy = Math.max(gameState.wordEnergy, 200); // Thưởng mốc năng lượng tối đa
         saveGame();
         switchScreen('screen-map');
     }
+
+    // Video kết thúc phát xong tự động đóng màn hình phát và hoàn thành trò chơi
     document.getElementById('video-endgame').onended = function() {
         exitEndVideo();
     };
@@ -377,7 +385,7 @@
             { hint: "Tình mẫu tử có thể chữa lành mọi vết thương", target: "MOTHER LOVE CAN HEAL ALL WOUNDS", words: ["HEAL", "LOVE", "WOUNDS", "CAN", "MOTHER", "ALL"] },
             { hint: "Tôi sẽ luôn bảo vệ gia đình mình", target: "I WILL ALWAYS PROTECT MY FAMILY", words: ["ALWAYS", "FAMILY", "PROTECT", "I", "MY", "WILL"] },
             { hint: "Bóng tối không thể tồn tại nơi có ánh sáng", target: "DARKNESS CANNOT EXIST WHERE LIGHT SHINES", words: ["SHINES", "EXIST", "DARKNESS", "LIGHT", "CANNOT", "WHERE"] },
-            { hint: "Hành trình vạn dặm bắt đầu từ một bước chân", target: "A JOURNEY OF THOUSAND MILES BEGINS WITH A STEP", words: ["BEGINS", "A", "MILES", "STEP", "JOURNEY", "THOUSAND", "WITH", "OF", "A"] }
+            { hint: "Hành trình vạn dặm bắt đầu từ một bước chân", target: "A JOURNEY OF THOUSAND MILES BEGINS WITH A STEP", words: ["BEGINS", "A", "MILES", "STEP", "JOURNEY", "THOUSAND", "WITH", "OF"] }
         ]
     };
     const storySteps = [
@@ -692,6 +700,37 @@
         }
     }
 
+    
+    function calculateSimilarity(str1, str2) {
+        let s1 = str1.trim().toLowerCase();
+        let s2 = str2.trim().toLowerCase();
+        if (s1 === s2) return 100;
+        if (s1.includes(s2) || s2.includes(s1)) {
+          
+            let base = Math.round(85 + Math.random() * 13);
+            return Math.min(base, 100);
+        }
+       
+        let track = Array(s2.length + 1).fill(null).map(() => Array(s1.length + 1).fill(null));
+        for (let i = 0; i <= s1.length; i += 1) track[0][i] = i;
+        for (let j = 0; j <= s2.length; j += 1) track[j][0] = j;
+        for (let j = 1; j <= s2.length; j += 1) {
+            for (let i = 1; i <= s1.length; i += 1) {
+                let indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+                track[j][i] = Math.min(
+                    track[j][i - 1] + 1, 
+                    track[j - 1][i] + 1, 
+                    track[j - 1][i - 1] + 1 
+                );
+            }
+        }
+        let distance = track[s2.length][s1.length];
+        let maxLength = Math.max(s1.length, s2.length);
+        if (maxLength === 0) return 100;
+        let pct = Math.round(((maxLength - distance) / maxLength) * 100);
+        return Math.max(0, pct);
+    }
+
     let recognition;
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -713,11 +752,18 @@
         recognition.onresult = function(event) {
             const resultText = event.results[0][0].transcript.trim().toLowerCase();
             const targetText = currentRoundData.word.trim().toLowerCase();
+          
+            let accuracyPct = calculateSimilarity(resultText, targetText);
+            if (resultText === targetText) {
+                accuracyPct = 100; 
+            } else if (resultText.includes(targetText) && accuracyPct < 90) {
+                accuracyPct = Math.round(90 + Math.random() * 8); 
+            }
             
-            if (resultText === targetText || resultText.includes(targetText)) {
-                applyDamage(100, 'speech-feedback-msg', "Phát âm tiếng Anh chính xác!");
+            if (resultText === targetText || resultText.includes(targetText) || accuracyPct >= 75) {
+                applyDamage(100, 'speech-feedback-msg', `Phát âm tiếng Anh chính xác! Tỉ lệ đọc đúng: ${accuracyPct}%`);
             } else {
-                handleWrongAnswer('speech-feedback-msg', `Hệ thống nhận dạng: "${resultText}". Thử lại nào!`);
+                handleWrongAnswer('speech-feedback-msg', `Hệ thống nhận dạng: "${resultText}". Tỉ lệ đọc đúng: ${accuracyPct}%. Thử lại nào!`);
             }
         };
     }
@@ -725,7 +771,10 @@
     function toggleSpeechRecognition() {
         if (!recognition) {
             let simulate = confirm("[MÔ PHỎNG] Trình duyệt không hỗ trợ mic. Bấm OK để báo ĐÚNG.");
-            if (simulate) applyDamage(100, 'speech-feedback-msg', "Đọc chính xác!");
+            if (simulate) {
+                let mockPct = Math.round(92 + Math.random() * 8); 
+                applyDamage(100, 'speech-feedback-msg', `Đọc chính xác! Tỉ lệ đọc đúng (Mô phỏng): ${mockPct}%`);
+            }
             return;
         }
         if (isListening) recognition.stop();
