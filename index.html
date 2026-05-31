@@ -761,9 +761,9 @@
             }
             
             if (resultText === targetText || resultText.includes(targetText) || accuracyPct >= 75) {
-                applyDamage(100, 'speech-feedback-msg', `Phát âm tiếng Anh chính xác! Tỉ lệ đọc đúng: ${accuracyPct}%`);
+                applyDamage(100, 'speech-feedback-msg', `Phát âm chính xác! Bạn đã đọc đúng ${accuracyPct}%.`);
             } else {
-                handleWrongAnswer('speech-feedback-msg', `Hệ thống nhận dạng: "${resultText}". Tỉ lệ đọc đúng: ${accuracyPct}%. Thử lại nào!`);
+                handleWrongAnswer('speech-feedback-msg', `Hệ thống ghi nhận: "${resultText}". Bạn đã đọc đúng ${accuracyPct}%. Thử lại nào!`);
             }
         };
     }
@@ -773,7 +773,7 @@
             let simulate = confirm("[MÔ PHỎNG] Trình duyệt không hỗ trợ mic. Bấm OK để báo ĐÚNG.");
             if (simulate) {
                 let mockPct = Math.round(92 + Math.random() * 8); 
-                applyDamage(100, 'speech-feedback-msg', `Đọc chính xác! Tỉ lệ đọc đúng (Mô phỏng): ${mockPct}%`);
+                applyDamage(100, 'speech-feedback-msg', `Đọc chính xác! Bạn đã đọc đúng ${mockPct}%.`);
             }
             return;
         }
