@@ -752,15 +752,32 @@
         recognition.onresult = function(event) {
             const resultText = event.results[0][0].transcript.trim().toLowerCase();
             const targetText = currentRoundData.word.trim().toLowerCase();
-          
-            let accuracyPct = calculateSimilarity(resultText, targetText);
+            
+            // Lấy độ tin cậy chất giọng thực tế từ hệ thống nhận diện (từ 0.0 đến 1.0)
+            let speechConfidence = event.results[0][0].confidence || 0.85;
+            
+            // Tính độ tương đồng từ vựng dựa trên khoảng cách ký tự
+            let textSimilarity = calculateSimilarity(resultText, targetText);
+            
+            // Tỷ lệ chính xác cuối cùng phụ thuộc trực tiếp vào chất giọng người đọc và độ khớp từ
+            let accuracyPct = 0;
+            
             if (resultText === targetText) {
-                accuracyPct = 100; 
-            } else if (resultText.includes(targetText) && accuracyPct < 90) {
-                accuracyPct = Math.round(90 + Math.random() * 8); 
+                // Đọc đúng từ, số điểm dao động từ 85% - 100% hoàn toàn dựa vào chất giọng/độ rõ âm của mic
+                accuracyPct = Math.round(85 + (speechConfidence * 15));
+            } else if (resultText.includes(targetText)) {
+                // Đọc có chứa từ mục tiêu nhưng bị lẫn âm khác, dao động từ 75% - 90% dựa theo chất giọng
+                accuracyPct = Math.round(75 + (speechConfidence * 15));
+            } else {
+                // Đọc lệch từ, tính theo độ tương đồng ký tự thực tế kết hợp trọng số chất giọng
+                accuracyPct = Math.round(textSimilarity * (0.4 + speechConfidence * 0.6));
             }
             
-            if (resultText === targetText || resultText.includes(targetText) || accuracyPct >= 75) {
+            // Đảm bảo giá trị nằm trong khoảng từ 0% đến 100%
+            accuracyPct = Math.max(0, Math.min(100, accuracyPct));
+            
+            // Điều kiện vượt qua thử thách: Đọc đúng từ hoặc tỷ lệ chất giọng đạt từ 78% trở lên
+            if (resultText === targetText || resultText.includes(targetText) || accuracyPct >= 78) {
                 applyDamage(100, 'speech-feedback-msg', `Phát âm chính xác! Bạn đã đọc đúng ${accuracyPct}%.`);
             } else {
                 handleWrongAnswer('speech-feedback-msg', `Hệ thống ghi nhận: "${resultText}". Bạn đã đọc đúng ${accuracyPct}%. Thử lại nào!`);
