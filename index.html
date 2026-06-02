@@ -25,7 +25,7 @@
                 <span class="hud-icon">⚡</span> <span id="val-energy">0</span> WE
             </div>
             <div class="hud-item rank-txt" style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 20px; box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); font-weight: bold; margin-left: auto;">
-                🏅 <span id="val-rank">Tập Sự</span>
+                 <span id="val-rank">Tập Sự</span>
             </div>
         </div>
 
@@ -425,10 +425,10 @@
         if(document.getElementById('val-energy')) document.getElementById('val-energy').innerText = gameState.wordEnergy;
         
         // Tính năng sáng tạo: Hệ thống Danh hiệu Học thuật tự động theo tiến trình XP
-        let rankName = "Tập Sự";
-        if (gameState.xp >= 300) rankName = "🔮 Đại Pháp Sư";
-        else if (gameState.xp >= 150) rankName = "📜 Học Giả Tri Thức";
-        else if (gameState.xp >= 50) rankName = "⚔️ Chiến Binh Ngôn Ngữ";
+        let rankName = "🏅Tập Sự";
+        if (gameState.xp >= 300) rankName = "🔮Đại Pháp Sư";
+        else if (gameState.xp >= 150) rankName = "📜Học Giả Tri Thức";
+        else if (gameState.xp >= 50) rankName = "⚔️Chiến Binh Ngôn Ngữ";
         
         if(document.getElementById('val-rank')) document.getElementById('val-rank').innerText = rankName;
 
