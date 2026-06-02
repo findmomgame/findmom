@@ -144,7 +144,7 @@
 
         <!-- 4. BATTLE GAMEPLAY SCREEN -->
         <div id="screen-battle" class="screen">
-            <div style=" padding-top: 40px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div style=" padding-top: 50px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <button onclick="switchScreen('screen-map')" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-weight: bold;">⬅ Bản đồ</button>
                 <div id="battle-title-zone" style="font-size: 13px; font-weight: bold; color: var(--accent-cyan)">FOREST OF WORDS</div>
             </div>
@@ -426,9 +426,9 @@
         
         // Tính năng sáng tạo: Hệ thống Danh hiệu Học thuật tự động theo tiến trình XP
         let rankName = "🏅Tập Sự";
-        if (gameState.xp >= 300) rankName = "🔮Đại Pháp Sư";
-        else if (gameState.xp >= 150) rankName = "📜Học Giả Tri Thức";
-        else if (gameState.xp >= 50) rankName = "⚔️Chiến Binh Ngôn Ngữ";
+        if (gameState.xp >= 300) rankName = "🔮Pháp Sư";
+        else if (gameState.xp >= 150) rankName = "📜Học Giả";
+        else if (gameState.xp >= 50) rankName = "⚔️Chiến Binh";
         
         if(document.getElementById('val-rank')) document.getElementById('val-rank').innerText = rankName;
 
