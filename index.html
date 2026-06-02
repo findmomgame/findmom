@@ -24,6 +24,9 @@
             <div class="hud-item energy-txt">
                 <span class="hud-icon">⚡</span> <span id="val-energy">0</span> WE
             </div>
+            <div class="hud-item rank-txt" style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 20px; box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); font-weight: bold; margin-left: auto;">
+                🏅 <span id="val-rank">Tập Sự</span>
+            </div>
         </div>
 
         <!-- 0. MÀN HÌNH INTRO VIDEO -->
@@ -420,6 +423,14 @@
         if(document.getElementById('val-coin')) document.getElementById('val-coin').innerText = gameState.coins;
         if(document.getElementById('val-xp')) document.getElementById('val-xp').innerText = gameState.xp;
         if(document.getElementById('val-energy')) document.getElementById('val-energy').innerText = gameState.wordEnergy;
+        
+        // Tính năng sáng tạo: Hệ thống Danh hiệu Học thuật tự động theo tiến trình XP
+        let rankName = "Tập Sự";
+        if (gameState.xp >= 300) rankName = "🔮 Đại Pháp Sư";
+        else if (gameState.xp >= 150) rankName = "📜 Học Giả Tri Thức";
+        else if (gameState.xp >= 50) rankName = "⚔️ Chiến Binh Ngôn Ngữ";
+        
+        if(document.getElementById('val-rank')) document.getElementById('val-rank').innerText = rankName;
 
         const nc = document.getElementById('node-city');
         const nl = document.getElementById('node-library');
@@ -681,6 +692,45 @@
         } catch (e) {
             console.error("Lỗi Audio gốc, chuyển qua SpeechSynthesis:", e);
             fallbackSpeechSynthesis(textToSpeak);
+        }
+    }
+
+    
+    // Tính năng sáng tạo: Tạo hiệu ứng pháo hoa hạt ma thuật (Magic Particle Burst) ăn mừng điểm cao
+    function createMagicSparks() {
+        const container = document.getElementById('game-container');
+        if (!container) return;
+        for (let i = 0; i < 25; i++) {
+            const spark = document.createElement('div');
+            spark.style.position = 'absolute';
+            spark.style.width = Math.random() * 8 + 4 + 'px';
+            spark.style.height = spark.style.width;
+            spark.style.backgroundColor = ['#06b6d4', '#a855f7', '#22c55e', '#eab308', '#ff4444'][Math.floor(Math.random() * 5)];
+            spark.style.borderRadius = '50%';
+            spark.style.left = '50%';
+            spark.style.top = '60%';
+            spark.style.zIndex = '999';
+            spark.style.pointerEvents = 'none';
+            spark.style.boxShadow = '0 0 10px ' + spark.style.backgroundColor;
+            
+            // Tính toán hướng bay ngẫu nhiên dạng pháo hoa
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 120 + 60;
+            const destX = Math.cos(angle) * velocity;
+            const destY = Math.sin(angle) * velocity - 30; // Hơi hướng lên trên
+            
+            container.appendChild(spark);
+            
+            spark.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${destX}px, ${destY}px) scale(0)`, opacity: 0 }
+            ], {
+                duration: Math.random() * 600 + 600,
+                easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)',
+                fill: 'forwards'
+            });
+            
+            setTimeout(() => spark.remove(), 1200);
         }
     }
 
