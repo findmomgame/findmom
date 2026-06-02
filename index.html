@@ -259,11 +259,11 @@
         const video = document.getElementById('video-intro');
         const overlay = document.getElementById('intro-overlay-control');
         if (video) {
-            video.muted = false; // Bật tiếng video
+            video.muted = false; 
             video.currentTime = 0;
             video.play().then(() => {
                 if(overlay) overlay.style.opacity = '0';
-                // Kích hoạt mồi hệ thống giọng nói để tránh Autoplay Policy block Web Speech API
+             
                 if ('speechSynthesis' in window) {
                     let unlockUtterance = new SpeechSynthesisUtterance('');
                     window.speechSynthesis.speak(unlockUtterance);
@@ -271,7 +271,7 @@
                 setTimeout(() => { if(overlay) overlay.style.display = 'none'; }, 300);
             }).catch(err => {
                 console.log("Phát video có âm thanh gặp lỗi bảo mật: ", err);
-                exitIntro(); // Dự phòng chuyển cảnh nếu lỗi nặng
+                exitIntro();
             });
         }
     }
@@ -627,6 +627,10 @@
     }
 
     function handleWrongAnswer(feedbackId, msg) {
+        // Tích hợp rung lắc màn hình khi trả lời sai kịch tính
+        triggerScreenShake();
+        // Hiện số điểm trừ hoặc cảnh báo bay lên
+        triggerFloatingText("MISSED!", false);
         let fb = document.getElementById(feedbackId);
         if (fb) {
             fb.innerText = msg;
@@ -645,6 +649,8 @@
     }
 
     function applyDamage(amount, feedbackId, msg) {
+        // Kích hoạt số sát thương chí mạng bay vọt lên màn hình cực đẹp
+        triggerFloatingText(`CRITICAL -${amount} HP`, true);
         gameState.monsterCurrentHP = Math.max(gameState.monsterCurrentHP - amount, 0);
         setupMonsterUI();
 
@@ -697,6 +703,97 @@
 
     
     // Tính năng sáng tạo: Tạo hiệu ứng pháo hoa hạt ma thuật (Magic Particle Burst) ăn mừng điểm cao
+    
+    // --- HỆ THỐNG HIỆU ỨNG SÁNG TẠO---
+    
+    // 1. Hiệu ứng Rung chuyển màn hình kịch tính (Screen Shake)
+    function triggerScreenShake() {
+        const container = document.getElementById('game-container');
+        if (!container) return;
+        container.style.transition = 'none';
+        let intensity = 8;
+        let count = 0;
+        let shakeInterval = setInterval(() => {
+            let x = (Math.random() - 0.5) * intensity;
+            let y = (Math.random() - 0.5) * intensity;
+            container.style.transform = `translate(${x}px, ${y}px)`;
+            count++;
+            if (count > 6) {
+                clearInterval(shakeInterval);
+                container.style.transform = 'none';
+                container.style.transition = 'all 0.3s ease';
+            }
+        }, 50);
+    }
+
+    // 2. Hiệu ứng Số Sát Thương / Điểm số bay lên sinh động (Floating Text Popup)
+    function triggerFloatingText(text, isCritical = false) {
+        const container = document.getElementById('game-container');
+        if (!container) return;
+        const pop = document.createElement('div');
+        pop.innerText = text;
+        pop.style.position = 'absolute';
+        pop.style.left = '50%';
+        pop.style.top = '40%';
+        pop.style.transform = 'translate(-50%, -50%)';
+        pop.style.fontSize = isCritical ? '28px' : '22px';
+        pop.style.fontWeight = '900';
+        pop.style.color = isCritical ? '#eab308' : '#ef4444';
+        pop.style.textShadow = '0 0 10px #000, 0 0 20px ' + (isCritical ? '#eab308' : '#ff4444');
+        pop.style.zIndex = '1000';
+        pop.style.pointerEvents = 'none';
+        
+        container.appendChild(pop);
+        
+        pop.animate([
+            { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0 },
+            { transform: 'translate(-50%, -120px) scale(1.2)', opacity: 1, offset: 0.3 },
+            { transform: 'translate(-50%, -200px) scale(1)', opacity: 0 }
+        ], {
+            duration: 1000,
+            easing: 'ease-out',
+            fill: 'forwards'
+        });
+        
+        setTimeout(() => pop.remove(), 1100);
+    }
+
+    // 3. Hệ thống Đốm bụi ma thuật lơ lửng nền (Cinematic Floating Background Orbs)
+    function initBackgroundOrbs() {
+        const container = document.getElementById('game-container');
+        if (!container) return;
+        // Giới hạn tối đa 12 hạt lơ lửng để tối ưu hiệu năng tuyệt đối
+        for (let i = 0; i < 12; i++) {
+            const orb = document.createElement('div');
+            orb.className = 'ambient-orb';
+            orb.style.position = 'absolute';
+            orb.style.width = Math.random() * 40 + 20 + 'px';
+            orb.style.height = orb.style.width;
+            orb.style.backgroundColor = ['rgba(6, 182, 212, 0.15)', 'rgba(168, 85, 247, 0.12)', 'rgba(34, 197, 94, 0.1)'][Math.floor(Math.random() * 3)];
+            orb.style.borderRadius = '50%';
+            orb.style.filter = 'blur(15px)';
+            orb.style.pointerEvents = 'none';
+            orb.style.zIndex = '0';
+            
+            // Vị trí xuất phát ngẫu nhiên
+            orb.style.left = Math.random() * 100 + '%';
+            orb.style.top = Math.random() * 100 + '%';
+            
+            container.appendChild(orb);
+            
+            // Chuyển động lơ lửng mượt mà vô tận
+            orb.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 0.3 },
+                { transform: `translate(${(Math.random() - 0.5) * 60}px, ${(Math.random() - 0.5) * 60}px) scale(1.2)`, opacity: 0.7, offset: 0.5 },
+                { transform: 'translate(0, 0) scale(1)', opacity: 0.3 }
+            ], {
+                duration: Math.random() * 6000 + 6000,
+                iterations: Infinity,
+                easing: 'ease-in-out'
+            });
+        }
+    }
+
     function createMagicSparks() {
         const container = document.getElementById('game-container');
         if (!container) return;
@@ -889,6 +986,8 @@
 
     window.onload = function() { 
         loadGame(); 
+        // Khởi động các đốm bụi ma thuật lơ lửng không gian nền siêu đẹp
+        initBackgroundOrbs();
     };
 </script>
 </body>
