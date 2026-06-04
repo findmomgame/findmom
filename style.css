@@ -11,6 +11,21 @@
     --gold: #eab308;
 }
 
+            @keyframes splashRotateClockwise {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            @keyframes splashRotateCounterClockwise {
+                0% { transform: rotate(360deg); }
+                100% { transform: rotate(0deg); }
+            }
+            @keyframes splashPulseCore {
+                0% { transform: scale(1); box-shadow: 0 0 35px #06b6d4, 0 0 70px #a855f7; }
+                50% { transform: scale(1.08); box-shadow: 0 0 50px #a855f7, 0 0 95px #06b6d4; }
+                100% { transform: scale(1); box-shadow: 0 0 35px #06b6d4, 0 0 70px #a855f7; }
+            }
+        
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -59,8 +74,8 @@ body {
 .hud-left {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 4px 6px;
+    gap: 8px;
+   padding: 4px 8px;
 }
 
 .btn-home, .btn-mute {
