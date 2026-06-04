@@ -251,71 +251,106 @@
         }
     }
 
-    // --- BATTLE MECHANICS CONTROLLER ---
-    function startBattleZone(zoneId) {
-        currentZone = zoneId;
-        switchScreen('screen-battle');
+// --- BATTLE MECHANICS CONTROLLER ---
+function startBattleZone(zoneId) {
+    
+    zoneId = parseInt(zoneId, 10);
 
-        const names = ["FOREST OF WORDS", "CITY OF ECHOES", "FROZEN LIBRARY", "SHADOW STATION", "⚡ FINAL GATE ⚡"];
-        const icons = ["👾", "🔥", "❄️", "👺", "👑"];
-        document.getElementById('battle-title-zone').innerText = names[zoneId];
-        document.getElementById('monster-img').innerText = icons[zoneId];
+    currentZone = zoneId - 1; 
+    
+    switchScreen('screen-battle');
 
-        if(zoneId === 5) {
-            gameState.monsterMaxHP = 300; 
-            document.getElementById('boss-mechanic-badge').style.display = 'block';
-        } else {
-            gameState.monsterMaxHP = 100;
-            document.getElementById('boss-mechanic-badge').style.display = 'none';
-        }
+    const names = ["FOREST OF WORDS", "CITY OF ECHOES", "FROZEN LIBRARY", "SHADOW STATION", "⚡ FINAL GATE ⚡"];
+    const icons = ["👾", "🔥", "❄️", "👺", "👑"];
+
+    const zoneTitleEl = document.getElementById('battle-title-zone');
+    if (zoneTitleEl) zoneTitleEl.innerText = names[currentZone];
+    
+    const subTitleEl = document.querySelector('.zone-display-header') || document.getElementById('sub-title-zone');
+    if (subTitleEl) subTitleEl.innerText = names[currentZone];
+
+    const monsterImgEl = document.getElementById('monster-img');
+    if (monsterImgEl) monsterImgEl.innerText = icons[currentZone];
+
+    if(currentZone === 4) { // Màn 5 (5 - 1 = 4) là Boss cuối
+        gameState.monsterMaxHP = 300; 
+        const badge = document.getElementById('boss-mechanic-badge');
+        if (badge) badge.style.display = 'block';
+    } else {
+        gameState.monsterMaxHP = 100;
+        const badge = document.getElementById('boss-mechanic-badge');
+        if (badge) badge.style.display = 'none';
+    }
+    
+    // Reset và khởi tạo máu
+    gameState.monsterCurrentHP = gameState.monsterMaxHP;
+    setupMonsterUI();
+    generateRoundChallenge();
+}
+
+function setupMonsterUI() {
+    let pct = (gameState.monsterCurrentHP / gameState.monsterMaxHP) * 100;
+    
+    const hpFill = document.getElementById('monster-hp-fill');
+    if(hpFill) hpFill.style.width = pct + "%";
+    
+    const hpText = document.getElementById('monster-hp-text');
+    if(hpText) hpText.innerText = `Khiên bảo vệ: ${gameState.monsterCurrentHP}/${gameState.monsterMaxHP}`;
+}
+
+function generateRoundChallenge() {
+    document.querySelectorAll('.game-view-panel').forEach(p => p.classList.remove('active-panel'));
+
+    let mode = "speech";
+    if (currentZone === 0) mode = "speech";       // Màn 1: FOREST OF WORDS
+    else if (currentZone === 1) mode = "quiz";     // Màn 2: CITY OF ECHOES
+    else if (currentZone === 2) mode = "speech";   // Màn 3: FROZEN LIBRARY
+    else if (currentZone === 3) mode = "scramble"; // Màn 4: SHADOW STATION
+    else if (currentZone === 4) {                  // Màn 5: FINAL GATE (Boss)
+        let rand = Math.random();
+        mode = rand < 0.34 ? "speech" : (rand < 0.67 ? "quiz" : "scramble");
+    }
+    currentDataType = mode;
+
+    if (mode === "speech") {
+        const panel = document.getElementById('panel-speech');
+        if (panel) panel.classList.add('active-panel');
         
-        gameState.monsterCurrentHP = gameState.monsterMaxHP;
-        setupMonsterUI();
-        generateRoundChallenge();
-    }
-
-    function setupMonsterUI() {
-        let pct = (gameState.monsterCurrentHP / gameState.monsterMaxHP) * 100;
-        if(document.getElementById('monster-hp-fill')) document.getElementById('monster-hp-fill').style.width = pct + "%";
-        if(document.getElementById('monster-hp-text')) document.getElementById('monster-hp-text').innerText = `Khiên bảo vệ: ${gameState.monsterCurrentHP}/${gameState.monsterMaxHP}`;
-    }
-
-    function generateRoundChallenge() {
-        document.querySelectorAll('.game-view-panel').forEach(p => p.classList.remove('active-panel'));
-
-        let mode = "speech";
-        if (currentZone === 1) mode = "speech";
-        else if (currentZone === 2) mode = "quiz";
-        else if (currentZone === 3) mode = "speech";
-        else if (currentZone === 4) mode = "scramble";
-        else if (currentZone === 5) {
-            let rand = Math.random();
-            mode = rand < 0.34 ? "speech" : (rand < 0.67 ? "quiz" : "scramble");
-        }
-        currentDataType = mode;
-
-        if (mode === "speech") {
-            document.getElementById('panel-speech').classList.add('active-panel');
-            let pool = currentZone === 3 ? zone3Library : zone1Words;
-            if (currentZone === 5) pool = zone5BossPools.speech;
-            
+        let pool = currentZone === 2 ? zone3Library : zone1Words;
+        if (currentZone === 4) pool = zone5BossPools.speech;
+        
+        if (pool && pool.length > 0) {
             currentRoundData = pool[Math.floor(Math.random() * pool.length)];
             document.getElementById('target-word').innerText = currentRoundData.word;
             document.getElementById('target-meaning').innerText = currentRoundData.definition;
-            document.getElementById('speech-feedback-msg').innerText = "Sẵn sàng nhận diện mic...";
-            document.getElementById('speech-feedback-msg').className = "speech-feedback feedback-neutral";
-        } 
-        else if (mode === "quiz") {
-            document.getElementById('panel-quiz').classList.add('active-panel');
-            let pool = currentZone === 5 ? zone5BossPools.quiz : zone2Conversations;
+        }
+        
+        const msg = document.getElementById('speech-feedback-msg');
+        if (msg) {
+            msg.innerText = "Sẵn sàng nhận diện mic...";
+            msg.className = "speech-feedback feedback-neutral";
+        }
+    } 
+    else if (mode === "quiz") {
+        const panel = document.getElementById('panel-quiz');
+        if (panel) panel.classList.add('active-panel');
+        
+        let pool = currentZone === 4 ? zone5BossPools.quiz : zone2Conversations;
+        
+        if (pool && pool.length > 0) {
             currentRoundData = pool[Math.floor(Math.random() * pool.length)];
-            
             document.getElementById('quiz-question-text').innerText = currentRoundData.q;
             document.getElementById('quiz-meaning-text').innerText = currentRoundData.hint;
-            document.getElementById('quiz-feedback-msg').innerText = "Hãy phản hồi hội thoại chuẩn xác!";
-            document.getElementById('quiz-feedback-msg').className = "speech-feedback feedback-neutral";
+        }
+        
+        const msg = document.getElementById('quiz-feedback-msg');
+        if (msg) {
+            msg.innerText = "Hãy phản hồi hội thoại chuẩn xác!";
+            msg.className = "speech-feedback feedback-neutral";
+        }
 
-            let box = document.getElementById('quiz-options-box');
+        let box = document.getElementById('quiz-options-box');
+        if (box && currentRoundData && currentRoundData.opts) {
             box.innerHTML = "";
             currentRoundData.opts.forEach(opt => {
                 let btn = document.createElement('button');
@@ -330,27 +365,37 @@
                 };
                 box.appendChild(btn);
             });
-        } 
-        else if (mode === "scramble") {
-            document.getElementById('panel-scramble').classList.add('active-panel');
-            let pool = currentZone === 5 ? zone5BossPools.scramble : zone4Scramble;
+        }
+    } 
+    else if (mode === "scramble") {
+        const panel = document.getElementById('panel-scramble');
+        if (panel) panel.classList.add('active-panel');
+        
+        let pool = currentZone === 4 ? zone5BossPools.scramble : zone4Scramble;
+        
+        if (pool && pool.length > 0) {
             currentRoundData = pool[Math.floor(Math.random() * pool.length)];
-            
             document.getElementById('scramble-hint').innerText = currentRoundData.hint;
-            document.getElementById('scramble-feedback-msg').innerText = "Sắp xếp từ để hoàn thiện câu.";
-            document.getElementById('scramble-feedback-msg').className = "speech-feedback feedback-neutral";
-            
-            userScrambleAnswer = [];
+        }
+        
+        const msg = document.getElementById('scramble-feedback-msg');
+        if (msg) {
+            msg.innerText = "Sắp xếp từ để hoàn thiện câu.";
+            msg.className = "speech-feedback feedback-neutral";
+        }
+        
+        userScrambleAnswer = [];
+        if (currentRoundData && currentRoundData.words) {
             let shuffled = [...currentRoundData.words].sort(() => Math.random() - 0.5);
             
             let slotsBox = document.getElementById('scramble-slots');
             let poolBox = document.getElementById('scramble-pool');
-            slotsBox.innerHTML = "";
-            poolBox.innerHTML = "";
+            if (slotsBox) slotsBox.innerHTML = "";
+            if (poolBox) poolBox.innerHTML = "";
 
             for(let i=0; i<currentRoundData.words.length; i++) {
                 let sl = document.createElement('div'); sl.className = "scramble-empty-slot"; sl.id = "sc-slot-" + i;
-                slotsBox.appendChild(sl);
+                if (slotsBox) slotsBox.appendChild(sl);
             }
 
             shuffled.forEach(w => {
@@ -364,10 +409,11 @@
                         updateScrambleUI();
                     }
                 };
-                poolBox.appendChild(btn);
+                if (poolBox) poolBox.appendChild(btn);
             });
         }
     }
+}
 
     function updateScrambleUI() {
         for(let i=0; i<currentRoundData.words.length; i++) {
@@ -465,7 +511,7 @@
     
     // Tính năng sáng tạo: Tạo hiệu ứng pháo hoa hạt ma thuật (Magic Particle Burst) ăn mừng điểm cao
     
-    // --- HỆ THỐNG HIỆU ỨNG SÁNG TẠO ĐỈNH CAO CHINH PHỤC GIẢNG VIÊN ---
+    // --- HỆ THỐNG HIỆU ỨNG SÁNG TẠO  ---
     
     // 1. Hiệu ứng Rung chuyển màn hình kịch tính (Screen Shake)
     function triggerScreenShake() {
@@ -798,5 +844,3 @@
         // Khởi động các đốm bụi ma thuật lơ lửng không gian nền siêu đẹp
         initBackgroundOrbs();
     };
-
-
