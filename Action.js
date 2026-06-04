@@ -1,3 +1,4 @@
+
     // --- GAME STATE ---
     const SAVE_KEY = "word_energy_game_save_v2";
     let gameState = {
@@ -23,11 +24,11 @@
         const video = document.getElementById('video-intro');
         const overlay = document.getElementById('intro-overlay-control');
         if (video) {
-            video.muted = false; 
+            video.muted = false; // Bật tiếng video
             video.currentTime = 0;
             video.play().then(() => {
                 if(overlay) overlay.style.opacity = '0';
-             
+                // Kích hoạt mồi hệ thống giọng nói để tránh Autoplay Policy block Web Speech API
                 if ('speechSynthesis' in window) {
                     let unlockUtterance = new SpeechSynthesisUtterance('');
                     window.speechSynthesis.speak(unlockUtterance);
@@ -35,7 +36,7 @@
                 setTimeout(() => { if(overlay) overlay.style.display = 'none'; }, 300);
             }).catch(err => {
                 console.log("Phát video có âm thanh gặp lỗi bảo mật: ", err);
-                exitIntro();
+                exitIntro(); // Dự phòng chuyển cảnh nếu lỗi nặng
             });
         }
     }
@@ -157,10 +158,10 @@
     };
     const storySteps = [
         { speaker: "Hệ thống", text: "Một đêm bão bùng gầm rú, sấm chớp rạch ngang trời, bầu không khí u ám bao trùm ngôi nhà...", graphic: "⛈️" },
-        { speaker: "Mẹ", text: "Con ơi, nhớ phải rèn luyện tri thức mỗi ngày, vững vàng bước đi con nhé...", graphic: "👩‍👦" },
+        { speaker: "Mẹ", text: "Con ơi, nhớ phải rèn luyện tri thức mỗi ngày, vững vàng bước đi con nhé...", graphic: "👩👦" },
         { speaker: "Quái vật", text: "Kha kha... Năng lượng tiêu cực đã chín muồi. Người mẹ này phải đi theo ta!", graphic: "👾" },
         { speaker: "Mẹ", text: "Con ơi! Hãy tích lũy năng lượng từ ngữ (Word Energy) để tìm và cứu mẹ...", graphic: "🌀" },
-        { speaker: "Tinh linh", text: "Đừng sợ! Tôi là Tinh linh Hướng dẫn. Hãy dùng tiếng Anh thật chuẩn xác để phá vỡ các phong ấn ma thuật!", graphic: "🧚‍♂️", storm: false }
+        { speaker: "Tinh linh", text: "Đừng sợ! Tôi là Tinh linh Hướng dẫn. Hãy dùng tiếng Anh thật chuẩn xác để phá vỡ các phong ấn ma thuật!", graphic: "🧚♂️", storm: false }
     ];
 
     // --- SAVE / LOAD GAME ---
@@ -189,10 +190,10 @@
         if(document.getElementById('val-energy')) document.getElementById('val-energy').innerText = gameState.wordEnergy;
         
         // Tính năng sáng tạo: Hệ thống Danh hiệu Học thuật tự động theo tiến trình XP
-        let rankName = "🏅Tập Sự";
-        if (gameState.xp >= 300) rankName = "🔮Pháp Sư";
-        else if (gameState.xp >= 150) rankName = "📜Học Giả";
-        else if (gameState.xp >= 50) rankName = "⚔️Chiến Binh";
+        let rankName = "Tập Sự";
+        if (gameState.xp >= 300) rankName = "🔮 Đại Pháp Sư";
+        else if (gameState.xp >= 150) rankName = "📜 Học Giả Tri Thức";
+        else if (gameState.xp >= 50) rankName = "⚔️ Chiến Binh Ngôn Ngữ";
         
         if(document.getElementById('val-rank')) document.getElementById('val-rank').innerText = rankName;
 
@@ -260,8 +261,8 @@
         currentZone = zoneId;
         switchScreen('screen-battle');
 
-        const names = ["", "FOREST OF WORDS", "CITY OF ECHOES", "FROZEN LIBRARY", "SHADOW STATION", "⚡ FINAL GATE ⚡"];
-        const icons = ["", "👾", "🔥", "❄️", "👺", "👑"];
+        const names = ["FOREST OF WORDS", "CITY OF ECHOES", "FROZEN LIBRARY", "SHADOW STATION", "⚡ FINAL GATE ⚡"];
+        const icons = ["👾", "🔥", "❄️", "👺", "👑"];
         document.getElementById('battle-title-zone').innerText = names[zoneId];
         document.getElementById('monster-img').innerText = icons[zoneId];
 
@@ -349,7 +350,8 @@
             
             let slotsBox = document.getElementById('scramble-slots');
             let poolBox = document.getElementById('scramble-pool');
-            slotsBox.innerHTML = ""; poolBox.innerHTML = "";
+            slotsBox.innerHTML = "";
+            poolBox.innerHTML = "";
 
             for(let i=0; i<currentRoundData.words.length; i++) {
                 let sl = document.createElement('div'); sl.className = "scramble-empty-slot"; sl.id = "sc-slot-" + i;
@@ -468,7 +470,7 @@
     
     // Tính năng sáng tạo: Tạo hiệu ứng pháo hoa hạt ma thuật (Magic Particle Burst) ăn mừng điểm cao
     
-    // --- HỆ THỐNG HIỆU ỨNG SÁNG TẠO---
+    // --- HỆ THỐNG HIỆU ỨNG SÁNG TẠO ĐỈNH CAO CHINH PHỤC GIẢNG VIÊN ---
     
     // 1. Hiệu ứng Rung chuyển màn hình kịch tính (Screen Shake)
     function triggerScreenShake() {
@@ -748,8 +750,60 @@
         };
     }
 
+    
+    // Hàm đóng màn hình Splash ma thuật mở đầu mượt mà
+    function startMainGameJourney() {
+        const splash = document.getElementById('custom-magic-splash');
+        if (splash) {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            setTimeout(() => {
+                splash.remove();
+                // Tự động kích hoạt phát video intro sau khi đóng Splash nếu có video-intro
+                const introVid = document.getElementById('video-intro');
+                if (introVid) {
+                    introVid.play().catch(e => console.log("Chờ tương tác người dùng để phát video"));
+                }
+            }, 800);
+        }
+    }
+
+    // Khởi tạo các hạt sáng ma thuật di chuyển chậm rãi trên nền Splash
+    function initSplashAmbientParticles() {
+        const pContainer = document.getElementById('splash-particle-ambient');
+        if (!pContainer) return;
+        for (let i = 0; i < 15; i++) {
+            const part = document.createElement('div');
+            part.style.position = 'absolute';
+            part.style.width = Math.random() * 5 + 2 + 'px';
+            part.style.height = part.style.width;
+            part.style.backgroundColor = Math.random() > 0.5 ? '#06b6d4' : '#a855f7';
+            part.style.borderRadius = '50%';
+            part.style.filter = 'blur(1px)';
+            part.style.opacity = Math.random() * 0.6 + 0.2;
+            part.style.left = Math.random() * 100 + '%';
+            part.style.top = Math.random() * 100 + '%';
+            pContainer.appendChild(part);
+
+            part.animate([
+                { transform: 'translate(0, 0)', opacity: part.style.opacity },
+                { transform: `translate(${(Math.random() - 0.5) * 40}px, ${(Math.random() - 0.5) * 40}px)`, opacity: 0.1, offset: 0.5 },
+                { transform: 'translate(0, 0)', opacity: part.style.opacity }
+            ], {
+                duration: Math.random() * 4000 + 4000,
+                iterations: Infinity,
+                easing: 'ease-in-out'
+            });
+        }
+    }
+    
+    // Kích hoạt nạp hạt sau khi DOM sẵn sàng
+    setTimeout(initSplashAmbientParticles, 100);
+
     window.onload = function() { 
         loadGame(); 
         // Khởi động các đốm bụi ma thuật lơ lửng không gian nền siêu đẹp
         initBackgroundOrbs();
     };
+
+
