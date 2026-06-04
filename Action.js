@@ -277,7 +277,7 @@ function startBattleZone(zoneId) {
         const badge = document.getElementById('boss-mechanic-badge');
         if (badge) badge.style.display = 'block';
     } else {
-        gameState.monsterMaxHP = 400;
+        gameState.monsterMaxHP = 500;
         const badge = document.getElementById('boss-mechanic-badge');
         if (badge) badge.style.display = 'none';
     }
@@ -316,8 +316,10 @@ function generateRoundChallenge() {
         const panel = document.getElementById('panel-speech');
         if (panel) panel.classList.add('active-panel');
         
-        let pool = currentZone === 2 ? zone3Library : zone1Words;
-        if (currentZone === 4) pool = zone5BossPools.speech;
+        let pool = [];
+        if (currentZone === 0) pool = zone1Words;
+        else if (currentZone === 2) pool = zone3Library;
+        else if (currentZone === 4) pool = zone5BossPools.speech;
         
         if (pool && pool.length > 0) {
             currentRoundData = pool[Math.floor(Math.random() * pool.length)];
@@ -335,7 +337,9 @@ function generateRoundChallenge() {
         const panel = document.getElementById('panel-quiz');
         if (panel) panel.classList.add('active-panel');
         
-        let pool = currentZone === 4 ? zone5BossPools.quiz : zone2Conversations;
+        let pool = [];
+        if (currentZone === 4) pool = zone5BossPools.quiz;
+        else pool = zone2Conversations;
         
         if (pool && pool.length > 0) {
             currentRoundData = pool[Math.floor(Math.random() * pool.length)];
