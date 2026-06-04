@@ -191,9 +191,9 @@
         
         // Tính năng sáng tạo: Hệ thống Danh hiệu Học thuật tự động theo tiến trình XP
         let rankName = "Tập Sự";
-        if (gameState.xp >= 300) rankName = "🔮 Đại Pháp Sư";
-        else if (gameState.xp >= 150) rankName = "📜 Học Giả Tri Thức";
-        else if (gameState.xp >= 50) rankName = "⚔️ Chiến Binh Ngôn Ngữ";
+        if (gameState.xp >= 300) rankName = "🔮Pháp Sư";
+        else if (gameState.xp >= 150) rankName = "📜Học Giả";
+        else if (gameState.xp >= 50) rankName = "⚔️Chiến Binh";
         
         if(document.getElementById('val-rank')) document.getElementById('val-rank').innerText = rankName;
 
@@ -470,7 +470,7 @@
     
     // Tính năng sáng tạo: Tạo hiệu ứng pháo hoa hạt ma thuật (Magic Particle Burst) ăn mừng điểm cao
     
-    // --- HỆ THỐNG HIỆU ỨNG SÁNG TẠO ĐỈNH CAO CHINH PHỤC GIẢNG VIÊN ---
+    // --- HỆ THỐNG HIỆU ỨNG ---
     
     // 1. Hiệu ứng Rung chuyển màn hình kịch tính (Screen Shake)
     function triggerScreenShake() {
