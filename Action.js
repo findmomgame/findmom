@@ -465,7 +465,7 @@
     
     // Tính năng sáng tạo: Tạo hiệu ứng pháo hoa hạt ma thuật (Magic Particle Burst) ăn mừng điểm cao
     
-    // --- HỆ THỐNG HIỆU ỨNG ---
+    // --- HỆ THỐNG HIỆU ỨNG SÁNG TẠO ĐỈNH CAO CHINH PHỤC GIẢNG VIÊN ---
     
     // 1. Hiệu ứng Rung chuyển màn hình kịch tính (Screen Shake)
     function triggerScreenShake() {
@@ -753,9 +753,7 @@
             splash.style.opacity = '0';
             splash.style.visibility = 'hidden';
             setTimeout(() => {
-                splash.remove();
-                // Tự động kích hoạt phát video intro sau khi đóng Splash nếu có video-intro
-                const introVid = document.getElementById('video-intro');
+                splash.remove();                
                 if (introVid) {
                     introVid.play().catch(e => console.log("Chờ tương tác người dùng để phát video"));
                 }
