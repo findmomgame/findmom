@@ -277,7 +277,7 @@ function startBattleZone(zoneId) {
         const badge = document.getElementById('boss-mechanic-badge');
         if (badge) badge.style.display = 'block';
     } else {
-        gameState.monsterMaxHP = 100;
+        gameState.monsterMaxHP = 400;
         const badge = document.getElementById('boss-mechanic-badge');
         if (badge) badge.style.display = 'none';
     }
