@@ -353,24 +353,26 @@ function generateRoundChallenge() {
             msg.className = "speech-feedback feedback-neutral";
         }
 
-        let box = document.getElementById('quiz-options-box');
+       let box = document.getElementById('quiz-options-box');
         if (box && currentRoundData && currentRoundData.opts) {
-            box.innerHTML = "";
-            currentRoundData.opts.forEach(opt => {
-                let btn = document.createElement('button');
-                btn.className = "btn-quiz-option";
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    if(opt === currentRoundData.ans) {
-                        applyDamage(100, 'quiz-feedback-msg', "Phản xạ giao tiếp cực kỳ chuẩn xác!");
-                    } else {
-                        handleWrongAnswer('quiz-feedback-msg', "Câu trả lời sai! Boss cuối hồi khiên!");
-                    }
-                };
-                box.appendChild(btn);
-            });
-        }
-    } 
+        box.innerHTML = "";
+
+        let shuffledOpts = [...currentRoundData.opts].sort(() => Math.random() - 0.5);
+
+        shuffledOpts.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = "btn-quiz-option";
+            btn.innerText = opt;
+            btn.onclick = () => {
+                if(opt === currentRoundData.ans) {
+                    applyDamage(50, 'quiz-feedback-msg', "Phản xạ giao tiếp cực kỳ chuẩn xác!");
+                } else {
+                    handleWrongAnswer('quiz-feedback-msg', "Câu trả lời sai! Boss cuối hồi khiên!");
+                }
+            };
+            box.appendChild(btn);
+        });
+    }
     else if (mode === "scramble") {
         const panel = document.getElementById('panel-scramble');
         if (panel) panel.classList.add('active-panel');
@@ -417,6 +419,7 @@ function generateRoundChallenge() {
             });
         }
     }
+}
 }
 
     function updateScrambleUI() {
