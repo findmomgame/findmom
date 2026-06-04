@@ -355,7 +355,7 @@ function generateRoundChallenge() {
 
        let box = document.getElementById('quiz-options-box');
         if (box && currentRoundData && currentRoundData.opts) {
-        box.innerHTML = "";
+        box.innerHTML = "";}
 
         let shuffledOpts = [...currentRoundData.opts].sort(() => Math.random() - 0.5);
 
@@ -420,7 +420,7 @@ function generateRoundChallenge() {
         }
     }
 }
-}
+
 
     function updateScrambleUI() {
         for(let i=0; i<currentRoundData.words.length; i++) {
