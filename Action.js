@@ -48,11 +48,6 @@
         loadGame(); 
     }
 
-    // Video Intro tự phát hết thời gian sẽ tự động gọi chuyển cảnh sang màn hình chính
-    document.getElementById('video-intro').onended = function() {
-        exitIntro();
-    };
-
     // Tự động kích hoạt phát video End Game khi thắng Boss 5
     function startEndGameVideo() {
         switchScreen('screen-endvideo');
