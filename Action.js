@@ -273,7 +273,7 @@ function startBattleZone(zoneId) {
     if (monsterImgEl) monsterImgEl.innerText = icons[currentZone];
 
     if(currentZone === 4) { // Màn 5 (5 - 1 = 4) là Boss cuối
-        gameState.monsterMaxHP = 300; 
+        gameState.monsterMaxHP = 500; 
         const badge = document.getElementById('boss-mechanic-badge');
         if (badge) badge.style.display = 'block';
     } else {
